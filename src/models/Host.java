@@ -9,7 +9,7 @@ public class Host extends Device {
     private String gatewayAddress;
 
     public Host(int id, String name, int x, int y, String gateway) {
-        super(id, name, x, y);
+        super(id, name, x, y, "resources/host_icon.png");
         this.gatewayAddress = gateway;
     }
 
@@ -85,17 +85,21 @@ public class Host extends Device {
     // ==========================================================
     @Override
     public void draw(Graphics g) {
-        // 1. Defina a cor
-        g.setColor(Color.RED);
-        // 2. Defina o tamanho
-        int radius = 25;
+        int drawX = getX() - DEVICE_SIZE / 2;
+        int drawY = getY() - DEVICE_SIZE / 2;
 
-        // Desenha o corpo do host (círculo)
-        g.fillOval(getX() - radius, getY() - radius, 2 * radius, 2 * radius);
+        if (deviceImage != null) {
+            // Desenha a imagem centralizada no ponto (x, y)
+            g.drawImage(deviceImage, drawX, drawY, null);
+        } else {
+            // Fallback: Se a imagem não carregar, desenha o quadrado amarelo original
+            g.setColor(Color.RED);
+            g.fillRect(drawX, drawY, DEVICE_SIZE, DEVICE_SIZE);
+        }
 
         // Desenha o nome
         g.setColor(Color.BLACK);
-        g.drawString(getName(), getX() + radius + 5, getY() + 5);
+        g.drawString(getName() + " (R-" + getId() + ")", getX() + DEVICE_SIZE / 2 + 5, getY() + 5);
     }
 
     // Getters e Setters
