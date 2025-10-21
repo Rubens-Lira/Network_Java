@@ -97,4 +97,27 @@ public class NetworkInterface {
       return false;
     }
   }
+public static int calculatePrefixLength(String subnetMask) {
+    try {
+        java.net.InetAddress maskAddr = java.net.InetAddress.getByName(subnetMask);
+        byte[] maskBytes = maskAddr.getAddress();
+        int prefixLength = 0;
+        
+        // Conta o número de bits "1" na máscara
+        for (byte b : maskBytes) {
+            // Conta os bits '1' em cada byte usando o popcount
+            int val = b & 0xFF; // Converte para inteiro sem sinal
+            while (val > 0) {
+                // Remove o bit '1' menos significativo
+                val &= (val - 1); 
+                prefixLength++;
+            }
+        }
+        return prefixLength;
+    } catch (java.net.UnknownHostException e) {
+        System.err.println("Erro ao calcular prefixo para a máscara: " + subnetMask);
+        return 0; 
+    }
+}
+
 }

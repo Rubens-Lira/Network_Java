@@ -91,98 +91,118 @@ public class SimulationPanel extends JPanel implements ActionListener, MouseList
 
   // Em SimulationPanel.java
 
-  @Override
-  public void mouseClicked(MouseEvent e) {
+ // Em SimulationPanel.java
+
+@Override
+public void mouseClicked(MouseEvent e) {
     int x = e.getX();
     int y = e.getY();
 
     // A. Lógica de Adição de Dispositivo
     if (MainApp.currentMode.equals("ADD_HOST") || MainApp.currentMode.equals("ADD_ROUTER")) {
-      String type = MainApp.currentMode.substring(4);
+        // ... (Seu código original para adicionar Host/Router está OK) ...
+        String type = MainApp.currentMode.substring(4); 
+        type = type.substring(0, 1).toUpperCase() + type.substring(1).toLowerCase();
 
-      try {
-        // Tenta criar o dispositivo usando os dados temporários do MainApp
-        networkMap.createAndAddDevice(
-            type,
-            MainApp.tempDeviceName,
-            MainApp.tempDeviceIp,
-            MainApp.tempDeviceMask,
-            x,
-            y);
-      } catch (InvalidIpException | InvalidMaskException ex) {
-        JOptionPane.showMessageDialog(this, "Erro de IP/Máscara: " + ex.getMessage() + ". Tente novamente.",
-            "Erro de Configuração", JOptionPane.ERROR_MESSAGE);
-      } catch (Exception ex) {
-        JOptionPane.showMessageDialog(this, "Erro desconhecido ao adicionar dispositivo: " + ex.getMessage(), "Erro",
-            JOptionPane.ERROR_MESSAGE);
-      } finally {
-        // Reseta o modo e os dados temporários após a tentativa
-        MainApp.currentMode = "NONE";
-        MainApp.tempDeviceName = null;
-        MainApp.tempDeviceIp = null;
-        MainApp.tempDeviceMask = null;
-        setCursor(Cursor.getDefaultCursor());
-        repaint();
-        // *** REMOVIDO: return; *** (Era o motivo do erro de compilação)
-      }
-      return; // Retorna aqui para evitar processar o clique como CONNECT
+        try {
+            Device newDevice = networkMap.createAndAddDevice(
+                    type,
+                    MainApp.tempDeviceName,
+                    MainApp.tempDeviceIp,
+                    MainApp.tempDeviceMask,
+                    x,
+                    y
+            );
+
+            if (newDevice != null) {
+                System.out.println("✅ Dispositivo adicionado: " + newDevice.getName() +
+                        " (" + type + ") em [" + x + "," + y + "]");
+            } else {
+                System.out.println("❌ Falha ao adicionar dispositivo: " + type);
+            }
+
+        } catch (InvalidIpException | InvalidMaskException ex) {
+            JOptionPane.showMessageDialog(this, "Erro de IP/Máscara: " + ex.getMessage() + ". Tente novamente.",
+                    "Erro de Configuração", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Erro desconhecido ao adicionar dispositivo: " + ex.getMessage(),
+                    "Erro", JOptionPane.ERROR_MESSAGE);
+        } finally {
+            // Reseta o modo e os dados temporários após a tentativa
+            MainApp.currentMode = "NONE";
+            MainApp.tempDeviceName = null;
+            MainApp.tempDeviceIp = null;
+            MainApp.tempDeviceMask = null;
+            setCursor(Cursor.getDefaultCursor());
+            repaint();
+        }
+        return; 
     }
 
     // B. Lógica de Conexão de Dispositivos
     else if (MainApp.currentMode.equals("CONNECT")) {
-      Device clickedDevice = networkMap.findDeviceByCoordinates(x, y, CLICK_TOLERANCE);
+        Device clickedDevice = networkMap.findDeviceByCoordinates(x, y, CLICK_TOLERANCE);
 
-      if (clickedDevice == null) {
-        System.out.println("Nenhum dispositivo encontrado na posição clicada. Modo CONNECT ativo.");
-        return;
-      }
-
-      if (MainApp.firstDeviceToConnect == null) {
-        // PRIMEIRO CLIQUE: Selecionar
-        MainApp.firstDeviceToConnect = clickedDevice;
-        System.out.println("Dispositivo 1 selecionado: " + clickedDevice.getName());
-        repaint();
-      } else if (MainApp.firstDeviceToConnect.equals(clickedDevice)) {
-        // Clicou no mesmo dispositivo: Limpa a seleção
-        MainApp.firstDeviceToConnect = null;
-        System.out.println("Seleção desfeita.");
-        repaint();
-      } else {
-        // SEGUNDO CLIQUE: Conectar
-        Device d1 = MainApp.firstDeviceToConnect;
-        Device d2 = clickedDevice;
-
-        try {
-          // Configurações via diálogo
-          String[] config1 = MainApp.showConnectionDialog(d1.getName());
-          if (config1 == null)
-            throw new Exception("Configuração para " + d1.getName() + " cancelada.");
-          String ip1 = config1[0];
-          String mask1 = config1[1];
-
-          String[] config2 = MainApp.showConnectionDialog(d2.getName());
-          if (config2 == null)
-            throw new Exception("Configuração para " + d2.getName() + " cancelada.");
-          String ip2 = config2[0];
-          String mask2 = config2[1];
-
-          // Executar a conexão
-          MainApp.connectDevices(d1, ip1, mask1, d2, ip2, mask2);
-          System.out.println("Conexão estabelecida com sucesso!");
-
-        } catch (Exception ex) {
-          JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro de Conexão/Configuração",
-              JOptionPane.ERROR_MESSAGE);
-        } finally {
-          // Limpar o modo e o estado de seleção
-          MainApp.currentMode = "NONE";
-          MainApp.firstDeviceToConnect = null;
-          setCursor(Cursor.getDefaultCursor());
-          repaint();
+        if (clickedDevice == null) {
+            System.out.println("Nenhum dispositivo encontrado na posição clicada. Modo CONNECT ativo.");
+            return;
         }
-      }
+
+        if (MainApp.firstDeviceToConnect == null) {
+            MainApp.firstDeviceToConnect = clickedDevice;
+            System.out.println("Dispositivo 1 selecionado: " + clickedDevice.getName());
+            repaint();
+        } else if (MainApp.firstDeviceToConnect.equals(clickedDevice)) {
+            MainApp.firstDeviceToConnect = null;
+            System.out.println("Seleção desfeita.");
+            repaint();
+        } else {
+            Device d1 = MainApp.firstDeviceToConnect;
+            Device d2 = clickedDevice;
+
+            try {
+                String[] config1 = MainApp.showConnectionDialog(d1.getName());
+                if (config1 == null) throw new Exception("Configuração para " + d1.getName() + " cancelada.");
+                String ip1 = config1[0];
+                String mask1 = config1[1];
+
+                String[] config2 = MainApp.showConnectionDialog(d2.getName());
+                if (config2 == null) throw new Exception("Configuração para " + d2.getName() + " cancelada.");
+                String ip2 = config2[0];
+                String mask2 = config2[1];
+
+                MainApp.connectDevices(d1, ip1, mask1, d2, ip2, mask2);
+                System.out.println("Conexão estabelecida com sucesso!");
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro de Conexão/Configuração",
+                        JOptionPane.ERROR_MESSAGE);
+            } finally {
+                MainApp.currentMode = "NONE";
+                MainApp.firstDeviceToConnect = null;
+                setCursor(Cursor.getDefaultCursor());
+                repaint();
+            }
+        }
     }
-  }
+
+    // C. NOVO: Lógica de Seleção de Roteador para Tabela de Roteamento
+    else if (MainApp.currentMode.equals("SELECT_ROUTER_FOR_ROUTE")) {
+        Device clickedDevice = networkMap.findDeviceByCoordinates(x, y, CLICK_TOLERANCE);
+        
+        if (clickedDevice instanceof models.Router) {
+            MainApp.routerToEdit = (models.Router) clickedDevice;
+            MainApp.currentMode = "NONE"; // Sai do modo de seleção
+            setCursor(Cursor.getDefaultCursor());
+            System.out.println("✅ Router '" + clickedDevice.getName() + "' selecionado para edição de rotas.");
+        } else if (clickedDevice != null) {
+            JOptionPane.showMessageDialog(this, 
+                "Selecione um ROTEADOR para configurar a Tabela de Roteamento.", 
+                "Seleção Inválida", JOptionPane.WARNING_MESSAGE);
+        } else {
+            System.out.println("Nenhum dispositivo encontrado para seleção.");
+        }
+    }
+}
 
   // Métodos obrigatórios do MouseListener (deixados vazios)
   @Override
